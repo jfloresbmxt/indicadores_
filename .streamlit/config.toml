@@ -1,0 +1,10 @@
+[theme]
+primaryColor="#9F2241"
+backgroundColor="#FFFFFF"
+secondaryBackgroundColor="#F0F2F6"
+textColor="#262730"
+font="serif"
+base="light"
+
+[server]
+maxMessageSize = 600
