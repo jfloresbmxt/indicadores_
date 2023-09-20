@@ -95,3 +95,18 @@ def pipeline(total):
                   "GAP RCEP", "GAP México", "Mercado RCEP (%)", "Mercado México (%)"]    
 
     return m
+
+def data_w(df):
+    df = df.groupby("Región").agg({"Importaciones del mundo":"sum",
+                                      "Importaciones RCEP":"sum",
+                                      "Importaciones México":"sum",
+                                      "Productos": "sum"
+                                      })
+    
+    df["GAP RCEP"] = df["Importaciones del mundo"] - df["Importaciones RCEP"]
+    df["GAP México"] = df["Importaciones del mundo"] - df["Importaciones México"]
+
+    df["Mercado RCEP (%)"] = (df["Importaciones RCEP"] / df["Importaciones del mundo"])*100
+    df["Mercado México (%)"] = (df["Importaciones México"] / df["Importaciones del mundo"])*100
+    
+    return df

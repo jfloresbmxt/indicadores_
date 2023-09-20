@@ -73,10 +73,10 @@ st.download_button(
 
 st.divider()
 def data_w(df):
-    df = df.groupby("Región").agg({"Importaciones del mundo":sum,
-                                      "Importaciones RCEP":sum,
-                                      "Importaciones México":sum,
-                                      "Productos": sum
+    df = df.groupby("Región").agg({"Importaciones del mundo":"sum",
+                                      "Importaciones RCEP":"sum",
+                                      "Importaciones México":"sum",
+                                      "Productos": "sum"
                                       })
     
     df["GAP RCEP"] = df["Importaciones del mundo"] - df["Importaciones RCEP"]
@@ -87,7 +87,7 @@ def data_w(df):
     
     return df
 
-st.subheader("Detalle importaciones por region de Estados Unidos")
+st.subheader("Importaciones por region de Estados Unidos")
 st.dataframe(data_w(m))
 data2 = convert_df(rfc_sectors)
 
