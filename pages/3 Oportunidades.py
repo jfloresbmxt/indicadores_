@@ -6,7 +6,7 @@ st.header("Oportunidades Nearshoring")
 
 @st.cache_data
 def get_data():
-    exports_mx = read_parquet("data/master.parquet")
+    exports_mx = read_parquet("data/masterv3.parquet")
 
     imports  = read_parquet("data/imports/masterv3.parquet")
     lista_estados = pd.read_excel("data/estados.xlsx")
@@ -22,7 +22,7 @@ def convert_df(df):
 
 exports_mx, imports, lista_estados = get_data()
 
-col1, col2 = st.columns(2)
+col1, col2, col3 = st.columns(3)
 
 with col1:
     estado = st.selectbox(
@@ -30,36 +30,45 @@ with col1:
         lista_estados
     )
     
-
 with col2:
-    st.markdown("**Conjuto de productos**")
-    agree = st.checkbox('240 productos', value=True)
+    n = st.radio(
+        "**Conjunto de productos**",
+        ("Todos", "240 productos")
+    )
+
+with col3:
+    p = st.radio(
+        "**Sectores**",
+        ("Todos", "Prioritarios")
+    )
     
 
 rango = st.slider('**Rango de exportaciones**', 0, 50000, 50000)
 
-def choice(agree):
-    if agree:
-        n = 1
-        return n
+def choice(x):
+    if x == "Todos":
+        x = 0
+        return x
     else:
-        n = 0
-        return n
+        x = 1
+        return x
 
 st.divider()
-rfcs, rfc_sectors, productos  = gen_numeralia(exports_mx, estado, rango, choice(agree))
+rfcs, rfc_sectors, productos  = gen_numeralia(exports_mx, estado, rango, choice(n), choice(p))
 
 ms = (imports.filter(col("partida").is_in(productos))).to_pandas()
 
 m = pipeline(ms)
 
-
-col3, col4 = st.columns(2)
+col3, col4, col5 = st.columns(3)
 with col3:
     st.metric(label="**Empresas exportadoras únicas**", value=len(rfcs))
 
 with col4:
     st.metric(label="**Productos exportados**", value=len(productos))
+
+with col5:
+    st.metric(label="**Sectores**", value=rfc_sectors["Sector"].nunique())
 
 st.dataframe(rfc_sectors, use_container_width=True)
 data1 = convert_df(rfc_sectors)
@@ -72,20 +81,6 @@ st.download_button(
 )
 
 st.divider()
-def data_w(df):
-    df = df.groupby("Región").agg({"Importaciones del mundo":"sum",
-                                      "Importaciones RCEP":"sum",
-                                      "Importaciones México":"sum",
-                                      "Productos": "sum"
-                                      })
-    
-    df["GAP RCEP"] = df["Importaciones del mundo"] - df["Importaciones RCEP"]
-    df["GAP México"] = df["Importaciones del mundo"] - df["Importaciones México"]
-
-    df["Mercado RCEP (%)"] = (df["Importaciones RCEP"] / df["Importaciones del mundo"])*100
-    df["Mercado México (%)"] = (df["Importaciones México"] / df["Importaciones del mundo"])*100
-    
-    return df
 
 st.subheader("Importaciones por region de Estados Unidos")
 st.dataframe(data_w(m))

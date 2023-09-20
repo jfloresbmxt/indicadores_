@@ -2,11 +2,14 @@ import polars as pl
 from polars import col
 import pandas as pd
 
-def gen_numeralia(exports_mx, estado:str, cota:int, nearshoring:int):
+
+
+def gen_numeralia(exports_mx, estado:str, cota:int, n, p):
     # Generamos lista de rfcs que exportan mas de 50k al año
     rfcs =  (exports_mx
             .filter(col("d_estado") == estado)
-            .filter(col("d_240") == nearshoring)
+            .filter((col("d_240") == 1) | (col("d_240") == n))
+            .filter((col("prioritario") == 1) | (col("prioritario") == p))
             .groupby(["rfc"])
             .agg(col("val_usd").sum())
             .filter(col("val_usd") > cota)
@@ -18,9 +21,10 @@ def gen_numeralia(exports_mx, estado:str, cota:int, nearshoring:int):
     # Generamos listado de empresas por sector y numero de productos
     rfcs_sector =  (exports_mx
                     .filter(col("d_estado") == estado)
-                    .filter(col("d_240") == nearshoring)
+                    .filter((col("d_240") == 1) | (col("d_240") == n))
+                    .filter((col("prioritario") == 1) | (col("prioritario") == p))
                     .filter((col("rfc").is_in(rfcs)))
-                    .groupby(["sector", "desc"])
+                    .groupby(["sector", "descripcion"])
                     .agg(col("val_usd").sum(),
                          col("rfc").n_unique(),
                          col("fraccion").n_unique()
@@ -33,7 +37,8 @@ def gen_numeralia(exports_mx, estado:str, cota:int, nearshoring:int):
     # Generamos listado de los productos que exportan esas empresas sin importar si son mayores a 50k
     productos = (exports_mx
                 .filter((col("rfc").is_in(rfcs)) & 
-                        (col("d_240")== nearshoring) &
+                        ((col("d_240") == 1) | (col("d_240") == n)) &
+                        ((col("prioritario") == 1) | (col("prioritario") == p)) &
                         (col("d_estado") == estado)
                         )
                 .select(col("fraccion"))
@@ -42,9 +47,9 @@ def gen_numeralia(exports_mx, estado:str, cota:int, nearshoring:int):
                 .to_list()
                 )
     
-    # d = ms_estado(n, productos)
 
-    return [rfcs, rfcs_sector, productos]
+    return [rfcs, rfcs_sector, productos]       
+
 
 
 def pipeline(total):
