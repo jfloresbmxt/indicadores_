@@ -54,6 +54,7 @@ def choice(x):
         return x
 
 st.divider()
+
 rfcs, rfc_sectors, productos  = gen_numeralia(exports_mx, estado, rango, choice(n), choice(p))
 
 ms = (imports.filter(col("partida").is_in(productos))).to_pandas()
@@ -74,33 +75,69 @@ st.dataframe(rfc_sectors, use_container_width=True)
 data1 = convert_df(rfc_sectors)
 
 st.download_button(
-    label="Descargar datos",
-    data=data1,
-    file_name=f'empresas_{estado}.csv',
-    mime='text/csv',
-)
+        label="Descargar datos",
+        data=data1,
+        file_name=f'empresas_{estado}.csv',
+        mime='text/csv',
+    )
 
-st.divider()
+group = st.radio(
+        "**Filtrar destino por**",
+        ("Estado", "Región")
+    )
 
-st.subheader("Importaciones por region de Estados Unidos")
-st.dataframe(data_w(m))
-data2 = convert_df(rfc_sectors)
 
-st.download_button(
-    label="Descargar datos",
-    data=data2,
-    file_name=f'importacion_regiones_usa_{estado}.csv',
-    mime='text/csv',
-)
-st.divider()
-st.subheader("Detalle importaciones por region de Estados Unidos")
 
-st.dataframe(m, use_container_width=True)
-data3 = convert_df(rfc_sectors)
+def region():
+    st.divider()
 
-st.download_button(
-    label="Descargar datos",
-    data=data3,
-    file_name=f'detalle_importaciones_usa_{estado}.csv',
-    mime='text/csv',
-)
+    st.subheader("Importaciones por region de Estados Unidos")
+    st.dataframe(data_w(m))
+    data2 = convert_df(rfc_sectors)
+
+    st.download_button(
+        label="Descargar datos",
+        data=data2,
+        file_name=f'importacion_regiones_usa_{estado}.csv',
+        mime='text/csv',
+    )
+    st.divider()
+    st.subheader("Detalle importaciones por region de Estados Unidos")
+
+    st.dataframe(m, use_container_width=True)
+    data3 = convert_df(m)
+
+    st.download_button(
+        label="Descargar datos",
+        data=data3,
+        file_name=f'detalle_importaciones_usa_{estado}.csv',
+        mime='text/csv',
+    )
+
+
+
+def state():
+    st.divider()
+
+    usa_states = ms["State"].unique()
+    usa = st.selectbox(
+        "**Selecciona el estado**",
+        usa_states
+    )
+
+    imports_usa = (ms[ms["State"] == usa])
+
+    imports_usa_s = pipeline_state_sector(imports_usa)
+    imports_usa_p = pipeline_state_partida(imports_usa)
+    
+    st.header("Importaciones por sector")
+    st.dataframe(imports_usa_s)
+
+    st.header("Importaciones por partida")
+    st.dataframe(imports_usa_p)
+
+
+if group == "Estado":
+    state()
+else:
+    region()
