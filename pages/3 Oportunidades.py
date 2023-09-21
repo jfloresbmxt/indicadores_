@@ -127,7 +127,7 @@ def state():
 
     imports_usa = (ms[ms["State"] == usa])
 
-    imports_usa_s = pipeline_state_sector(imports_usa)
+    imports_usa_s = pipeline_state_s(imports_usa)
     imports_usa_p = pipeline_state_partida(imports_usa)
     
     st.header("Importaciones por sector")

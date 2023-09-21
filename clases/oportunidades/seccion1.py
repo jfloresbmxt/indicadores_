@@ -101,7 +101,7 @@ def pipeline(total):
 
     return m
 
-def pipeline_state_sector(total):
+def pipeline_state_s(total):
     rcep = ["AUSTRALIA", "BRUNEI", "CAMBODIA", "CHINA", "KOREA, SOUTH", "PHILIPPINES", "INDONESIA",
         "JAPAN", "LAOS", "MALAYSIA", "BURMA", "NEW ZEALAND", "SINGAPORE", "THAILAND", "VIETNAM"]
 
