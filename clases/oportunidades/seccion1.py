@@ -92,15 +92,15 @@ def pipeline(total):
     m = m.merge(df_rcep, how="left", on=["region", "sector"])
     m = m.fillna(0)
     m = m[["region", "sector", "total", "rcep", "mexico", "partida"]]
-    m["total"] = m["total"]/1000000
-    m["rcep"] = m["rcep"]/1000000
-    m["mexico"] = m["mexico"]/1000000
+    m["total"] = round(m["total"]/1000000, 0)
+    m["rcep"] = round(m["rcep"]/1000000, 0)
+    m["mexico"] = round(m["mexico"]/1000000, 0)
     
     m["Gap RCEP"] = m["total"] - m["rcep"]
     m["Gap México"] = m["total"] - m["mexico"]
 
-    m["Mercado RCEP (%)"] =  (m["rcep"]/m["total"])*100
-    m["Mercado México (%)"] =  (m["mexico"]/m["total"])*100
+    m["Mercado RCEP (%)"] =  round((m["rcep"]/m["total"])*100, 2)
+    m["Mercado México (%)"] =  round((m["mexico"]/m["total"])*100,2)
     m.columns = ["Región", "Sector", "Importaciones del mundo",
                   "Importaciones RCEP", "Importaciones México", "Productos",
                   "GAP RCEP", "GAP México", "Mercado RCEP (%)", "Mercado México (%)"]
@@ -204,8 +204,8 @@ def pipeline_state_partida(total):
     m["Gap RCEP"] = m["total"] - m["rcep"]
     m["Gap México"] = m["total"] - m["mexico"]
 
-    m["Mercado RCEP (%)"] =  (m["rcep"]/m["total"])*100
-    m["Mercado México (%)"] =  (m["mexico"]/m["total"])*100
+    m["Mercado RCEP (%)"] =  round((m["rcep"]/m["total"])*100, 2)
+    m["Mercado México (%)"] =  round((m["mexico"]/m["total"])*100, 2)
     m.columns = ["Partida", "Importaciones del mundo",
                   "Importaciones RCEP", "Importaciones México",
                   "GAP RCEP", "GAP México", "Mercado RCEP (%)", "Mercado México (%)"]    
@@ -222,8 +222,8 @@ def data_w(df):
     df["GAP RCEP"] = df["Importaciones del mundo"] - df["Importaciones RCEP"]
     df["GAP México"] = df["Importaciones del mundo"] - df["Importaciones México"]
 
-    df["Mercado RCEP (%)"] = (df["Importaciones RCEP"] / df["Importaciones del mundo"])*100
-    df["Mercado México (%)"] = (df["Importaciones México"] / df["Importaciones del mundo"])*100
+    df["Mercado RCEP (%)"] = round((df["Importaciones RCEP"] / df["Importaciones del mundo"])*100, 2)
+    df["Mercado México (%)"] = round((df["Importaciones México"] / df["Importaciones del mundo"])*100, 2)
     
     return df
 
