@@ -3,6 +3,7 @@ from polars import col
 import pandas as pd
 
 
+
 def gen_numeralia(exports_mx, estado:str, cota:int, n, p):
     # Generamos lista de rfcs que exportan mas de 50k al año
     rfcs =  (exports_mx
@@ -52,17 +53,13 @@ def gen_numeralia(exports_mx, estado:str, cota:int, n, p):
 
 
 def pipeline(total):
-    sectores = pd.read_excel("data/subsectores.xlsx", dtype={"sector":str})
-    sectores["subsector_nombre"] = sectores["subsector_nombre"].str[6:]
-    sectores.rename(columns={"subsector_nombre": "Descripción"}, inplace=True)
-
     rcep = ["AUSTRALIA", "BRUNEI", "CAMBODIA", "CHINA", "KOREA, SOUTH", "PHILIPPINES", "INDONESIA",
         "JAPAN", "LAOS", "MALAYSIA", "BURMA", "NEW ZEALAND", "SINGAPORE", "THAILAND", "VIETNAM"]
 
     all_c = (total
     .query("country_name == 'TOTAL FOR ALL COUNTRIES'")
     .query("val_gen >0")
-    .groupby(["region", "sector"])
+    .groupby(["Division", "sector"])
     .agg({"val_gen":"sum", "partida":"nunique"})
     .reset_index()
     .drop(columns={"partida"})
@@ -72,7 +69,7 @@ def pipeline(total):
     df_rcep = (total
     .query(f"country_name.isin({rcep})")
     .query("val_gen >0")
-    .groupby(["region", "sector"])
+    .groupby(["Division", "sector"])
     .agg({"val_gen":"sum", "partida":"nunique"})
     .reset_index()
     .drop(columns={"partida"})
@@ -82,19 +79,16 @@ def pipeline(total):
     mexico = (total
         .query("country_name == 'MEXICO'")
         .query("val_gen > 0")
-        .groupby(["region", "sector"])
+        .groupby(["Division", "sector"])
         .agg({"val_gen":"sum", "partida":"nunique"})
         .reset_index()
         .rename(columns={"val_gen":"mexico"})
         )
     
-    m = all_c.merge(mexico, how= "left", on=["region", "sector"])
-    m = m.merge(df_rcep, how="left", on=["region", "sector"])
+    m = all_c.merge(mexico, how= "left", on=["Division", "sector"])
+    m = m.merge(df_rcep, how="left", on=["Division", "sector"])
     m = m.fillna(0)
-    m = m[["region", "sector", "total", "rcep", "mexico", "partida"]]
-    m["total"] = m["total"]/1000000
-    m["rcep"] = m["rcep"]/1000000
-    m["mexico"] = m["mexico"]/1000000
+    m = m[["Division", "sector", "total", "rcep", "mexico", "partida"]]
     
     m["Gap RCEP"] = m["total"] - m["rcep"]
     m["Gap México"] = m["total"] - m["mexico"]
@@ -103,14 +97,8 @@ def pipeline(total):
     m["Mercado México (%)"] =  (m["mexico"]/m["total"])*100
     m.columns = ["Región", "Sector", "Importaciones del mundo",
                   "Importaciones RCEP", "Importaciones México", "Productos",
-                  "GAP RCEP", "GAP México", "Mercado RCEP (%)", "Mercado México (%)"]
-    
-    m = pd.merge(sectores, m, left_on="sector", right_on="Sector").drop(columns={"sector"})
+                  "GAP RCEP", "GAP México", "Mercado RCEP (%)", "Mercado México (%)"]    
 
-    m = m[["Región", "Sector", "Descripción","Importaciones del mundo",
-         "Importaciones RCEP", "Importaciones México", "Productos",
-         "GAP RCEP", "GAP México", "Mercado RCEP (%)", "Mercado México (%)"]]
-    
     return m
 
 def pipeline_state_s(total):
@@ -162,6 +150,55 @@ def pipeline_state_s(total):
 
     return m
 
+def pipeline_state_state(total):
+    rcep = ["AUSTRALIA", "BRUNEI", "CAMBODIA", "CHINA", "KOREA, SOUTH", "PHILIPPINES", "INDONESIA",
+        "JAPAN", "LAOS", "MALAYSIA", "BURMA", "NEW ZEALAND", "SINGAPORE", "THAILAND", "VIETNAM"]
+
+    all_c = (total
+    .query("country_name == 'TOTAL FOR ALL COUNTRIES'")
+    .query("val_gen >0")
+    .groupby(["State", "sector"])
+    .agg({"val_gen":"sum", "partida":"nunique"})
+    .reset_index()
+    .drop(columns={"partida"})
+    .rename(columns={"val_gen":"total"})
+    )
+
+    df_rcep = (total
+    .query(f"country_name.isin({rcep})")
+    .query("val_gen >0")
+    .groupby(["State", "sector"])
+    .agg({"val_gen":"sum", "partida":"nunique"})
+    .reset_index()
+    .drop(columns={"partida"})
+    .rename(columns={"val_gen":"rcep"})
+    )
+
+    mexico = (total
+        .query("country_name == 'MEXICO'")
+        .query("val_gen > 0")
+        .groupby(["State", "sector"])
+        .agg({"val_gen":"sum", "partida":"nunique"})
+        .reset_index()
+        .rename(columns={"val_gen":"mexico"})
+        )
+    
+    m = all_c.merge(mexico, how= "left", on=["State", "sector"])
+    m = m.merge(df_rcep, how="left", on=["State", "sector"])
+    m = m.fillna(0)
+    m = m[["State", "total", "rcep", "mexico", "partida"]]
+    
+    m["Gap RCEP"] = m["total"] - m["rcep"]
+    m["Gap México"] = m["total"] - m["mexico"]
+
+    m["Mercado RCEP (%)"] =  (m["rcep"]/m["total"])*100
+    m["Mercado México (%)"] =  (m["mexico"]/m["total"])*100
+    m.columns = ["State", "Importaciones del mundo",
+                  "Importaciones RCEP", "Importaciones México", "Productos",
+                  "GAP RCEP", "GAP México", "Mercado RCEP (%)", "Mercado México (%)"]    
+
+    return m
+
 def pipeline_state_partida(total):
     rcep = ["AUSTRALIA", "BRUNEI", "CAMBODIA", "CHINA", "KOREA, SOUTH", "PHILIPPINES", "INDONESIA",
         "JAPAN", "LAOS", "MALAYSIA", "BURMA", "NEW ZEALAND", "SINGAPORE", "THAILAND", "VIETNAM"]
@@ -196,10 +233,7 @@ def pipeline_state_partida(total):
     m = all_c.merge(mexico, how= "left", on=["State", "partida"])
     m = m.merge(df_rcep, how="left", on=["State", "partida"])
     m = m.fillna(0)
-    m = m[["partida","total", "rcep", "mexico"]]
-    m["total"] = m["total"]/1000000
-    m["rcep"] = m["rcep"]/1000000
-    m["mexico"] = m["mexico"]/1000000
+    m = m[["partida","total", "rcep", "mexico",]]
     
     m["Gap RCEP"] = m["total"] - m["rcep"]
     m["Gap México"] = m["total"] - m["mexico"]

@@ -1,5 +1,5 @@
 import streamlit as st
-from polars import read_parquet, col, read_excel, Int64
+from polars import read_parquet, col
 import pandas as pd
 from clases.oportunidades.seccion1 import *
 st.header("Oportunidades Nearshoring")
@@ -9,6 +9,7 @@ def get_data():
     exports_mx = read_parquet("data/masterv3.parquet")
 
     imports  = read_parquet("data/imports/masterv3.parquet")
+
     lista_estados = pd.read_excel("data/estados.xlsx")
 
     return [exports_mx,
@@ -71,6 +72,9 @@ with col4:
 with col5:
     st.metric(label="**Sectores**", value=rfc_sectors["Sector"].nunique())
 
+rfc_sectors["Exportaciones"] = round(rfc_sectors["Exportaciones"]/1000000, 2)
+
+st.markdown("**Resumen exportaciones a Estados Unidos por producto y sector del estado, 2021 (Millones de dolares)**")
 st.dataframe(rfc_sectors, use_container_width=True)
 data1 = convert_df(rfc_sectors)
 
@@ -91,9 +95,9 @@ group = st.radio(
 def region():
     st.divider()
 
-    st.subheader("Importaciones por region de Estados Unidos")
+    st.subheader("Importaciones por region de Estados Unidos, 2021 (Millones de dolares)")
     st.dataframe(data_w(m))
-    data2 = convert_df(rfc_sectors)
+    data2 = convert_df(data_w(m))
 
     st.download_button(
         label="Descargar datos",
@@ -102,8 +106,7 @@ def region():
         mime='text/csv',
     )
     st.divider()
-    st.subheader("Detalle importaciones por region de Estados Unidos")
-
+    st.subheader("Detalle importaciones por region de Estados Unidos, 2021 (Millones de dolares)")
     st.dataframe(m, use_container_width=True)
     data3 = convert_df(m)
 
